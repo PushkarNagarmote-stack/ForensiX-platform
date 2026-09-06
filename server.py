@@ -119,6 +119,11 @@ def get_gemini_presets():
 @app.post("/api/gemini/unknown-search")
 def search_unknown_artifact(req: GeminiUnknownSearchRequest):
     try:
+        if not GeminiForensicService.has_api_key():
+            raise HTTPException(
+                status_code=401,
+                detail="GEMINI_API_KEY is not configured. Please add GEMINI_API_KEY to your Render environment variables or configure it in Studio settings."
+            )
         if not req.query and not req.hexSnippet and not req.magicBytes and not req.hash:
             raise HTTPException(
                 status_code=400,
@@ -142,6 +147,11 @@ def search_unknown_artifact(req: GeminiUnknownSearchRequest):
 @app.post("/api/gemini/case-assistant")
 def case_assistant_endpoint(req: GeminiCaseAssistantRequest):
     try:
+        if not GeminiForensicService.has_api_key():
+            raise HTTPException(
+                status_code=401,
+                detail="GEMINI_API_KEY is not configured. Please add GEMINI_API_KEY to your Render environment variables or configure it in Studio settings."
+            )
         if not req.query.strip():
             raise HTTPException(status_code=400, detail="Query is required.")
         result = GeminiForensicService.query_case_assistant(
@@ -157,6 +167,7 @@ def case_assistant_endpoint(req: GeminiCaseAssistantRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @app.get("/api/disks")

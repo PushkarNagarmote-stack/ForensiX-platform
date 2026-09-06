@@ -898,8 +898,8 @@ async function checkGeminiStatus() {
                 pill.textContent = "🔑 Key: Active (Live Gemini)";
                 pill.style.color = "var(--accent-emerald)";
             } else {
-                pill.textContent = "🔑 Key: Air-Gapped Mode";
-                pill.style.color = "var(--accent-gold)";
+                pill.textContent = "⚠️ Key: API Key Required";
+                pill.style.color = "var(--accent-crimson)";
             }
         }
     } catch (err) {
@@ -1145,6 +1145,9 @@ async function sendAssistantMessage(overrideText) {
         });
 
         const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.detail || `Server error (${res.status})`);
+        }
         assistantMessages.push({
             id: `ASST-${Date.now()}`,
             sender: "ASSISTANT",
@@ -1392,10 +1395,13 @@ async function executeGeminiSearch() {
         });
 
         const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.detail || `Server error (${res.status})`);
+        }
         renderGeminiResults(data);
     } catch (err) {
         console.error("Gemini search failed:", err);
-        alert(`Search failed: ${err.message}`);
+        alert(`Gemini Search Error:\n${err.message}`);
     } finally {
         if (btnSearch) btnSearch.disabled = false;
         if (spinner) spinner.style.display = "none";

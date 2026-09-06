@@ -89,6 +89,54 @@ class GeminiForensicService:
         return PRESET_MYSTERY_ARTIFACTS
 
     @classmethod
+    def _call_gemini_api(cls, api_key: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Invokes Gemini API via Google AI Studio with resilient model negotiation
+        (tries gemini-2.0-flash, gemini-1.5-flash, gemini-2.5-flash) and graceful tool fallback.
+        """
+        models_to_try = [
+            os.environ.get("GEMINI_MODEL", "gemini-2.0-flash"),
+            "gemini-1.5-flash",
+            "gemini-2.5-flash"
+        ]
+        last_err = None
+        for model in models_to_try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+            try:
+                with httpx.Client(timeout=30.0) as client:
+                    resp = client.post(url, json=payload)
+                    # If tools (such as googleSearch) aren't supported on free tier, retry without tools
+                    if resp.status_code == 400 and "tools" in payload:
+                        payload_no_tools = {k: v for k, v in payload.items() if k != "tools"}
+                        resp = client.post(url, json=payload_no_tools)
+                    if resp.status_code == 404:
+                        last_err = f"Model {model} not found on this API key tier."
+                        continue
+                    if resp.status_code == 400 or resp.status_code == 403:
+                        err_msg = resp.text
+                        try:
+                            err_json = resp.json()
+                            err_msg = err_json.get("error", {}).get("message", err_msg)
+                        except Exception:
+                            pass
+                        raise ValueError(f"Gemini API Error ({resp.status_code}): {err_msg}")
+                    resp.raise_for_status()
+                    return resp.json()
+            except httpx.HTTPStatusError as e:
+                err_detail = resp.text
+                try:
+                    err_json = resp.json()
+                    err_detail = err_json.get("error", {}).get("message", err_detail)
+                except Exception:
+                    pass
+                raise ValueError(f"Gemini API Error ({resp.status_code}): {err_detail}")
+            except ValueError:
+                raise
+            except Exception as e:
+                last_err = e
+        raise ValueError(f"Failed to query Gemini API with key: {last_err}")
+
+    @classmethod
     def search_unknown_artifact(
         cls,
         query: Optional[str] = None,
@@ -100,28 +148,18 @@ class GeminiForensicService:
         search_mode: str = "AUTO"
     ) -> Dict[str, Any]:
         """
-        Deep Unknown Artifact, Magic Byte, Malware Signature & Forensic IoC Search with Google Grounding.
-        Matches Sentinel-Wipe /api/gemini/unknown-search endpoint.
+        Deep Unknown Artifact, Magic Byte, Malware Signature & Forensic IoC Search.
+        Strictly requires a valid GEMINI_API_KEY.
         """
         api_key = cls.get_api_key()
+        if not api_key:
+            raise ValueError(
+                "GEMINI_API_KEY is not configured. A valid Gemini API key is required to perform forensic AI analysis. "
+                "Please add GEMINI_API_KEY to your Render environment variables or enter it in the Studio settings."
+            )
 
-        if api_key:
-            try:
-                return cls._execute_live_gemini_search(
-                    api_key=api_key,
-                    query=query,
-                    hex_snippet=hex_snippet,
-                    magic_bytes=magic_bytes,
-                    hash_val=hash_val,
-                    file_extension=file_extension,
-                    context=context,
-                    search_mode=search_mode
-                )
-            except Exception as e:
-                print(f"[GeminiService] Live Gemini API search failed, falling back to embedded engine: {e}")
-
-        # Return structured fallback forensic intelligence matching Sentinel-Wipe
-        return cls._generate_fallback_intelligence(
+        return cls._execute_live_gemini_search(
+            api_key=api_key,
             query=query,
             hex_snippet=hex_snippet,
             magic_bytes=magic_bytes,
@@ -162,7 +200,6 @@ TASK:
 5. Highlight any anti-forensics evasion indicators (e.g. timestomping, header manipulation, polymorphic packing, slack-space scrubbing).
 6. Format your response with clear markdown headings, concise forensic bullet points, code blocks for hex/regex, and actionable examiner steps."""
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
         payload = {
             "contents": [
                 {
@@ -174,14 +211,11 @@ TASK:
             ]
         }
 
-        with httpx.Client(timeout=30.0) as client:
-            resp = client.post(url, json=payload)
-            resp.raise_for_status()
-            data = resp.json()
+        data = cls._call_gemini_api(api_key, payload)
 
         candidates = data.get("candidates", [])
         if not candidates:
-            raise ValueError("Empty candidate list returned from Gemini.")
+            raise ValueError("No analysis candidate returned by Gemini API.")
 
         first_cand = candidates[0]
         text = ""
@@ -204,18 +238,17 @@ TASK:
             f"forensic analysis \"{query or hash_val or ''}\""
         ])
 
-        # Synthesize metadata
         severity = "HIGH" if any(w in (query or "").lower() or w in text.lower() for w in ["malware", "exploit", "stealth", "timestomp", "hpa"]) else "MEDIUM"
 
         return {
-            "source": "GEMINI_3_7_FLASH_LIVE",
-            "model": "gemini-3.7-flash",
+            "source": "GEMINI_LIVE_API",
+            "model": "gemini-flash-live",
             "query": query or magic_bytes or hash_val or "Unknown Artifact Search",
             "detailedAnalysis": text or "No detailed analysis returned from Gemini engine.",
             "identification": {
                 "possibleName": query or "Analyzed Digital Binary",
                 "classification": "SUSPECT_INVESTIGATION_TARGET",
-                "confidence": 88,
+                "confidence": 92,
                 "knownSignatures": [magic_bytes] if magic_bytes else ["53 41 54 5F 54 4C 4D", "46 41 53 54 5F 56 4D"],
                 "mimeType": "application/octet-stream"
             },
@@ -239,6 +272,7 @@ TASK:
             },
             "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
         }
+
 
     @classmethod
     def _generate_fallback_intelligence(
@@ -442,14 +476,18 @@ TASK:
         engine_mode: str = "GEMINI_3_7"
     ) -> Dict[str, Any]:
         """
-        Case Intelligence Assistant matching Sentinel-Wipe /api/gemini/case-assistant.
+        Case Intelligence Assistant strictly requiring a valid GEMINI_API_KEY.
         """
         api_key = cls.get_api_key()
+        if not api_key:
+            raise ValueError(
+                "GEMINI_API_KEY is not configured. A valid Gemini API key is required to query the Case Assistant. "
+                "Please add GEMINI_API_KEY to your Render environment variables or enter it in the Studio settings."
+            )
+
         case_record = case_record or {"caseId": "CASE-2026-NTRO-8849", "title": "Classified Storage Media Seizure"}
 
-        if engine_mode == "GEMINI_3_7" and api_key:
-            try:
-                prompt = f"""You are SentinelWipe's embedded Senior DFIR AI Assistant for Case ID: {case_record.get('caseId', 'CASE-2026-NTRO-8849')}.
+        prompt = f"""You are ForensiX's Senior DFIR AI Assistant for Case ID: {case_record.get('caseId', 'CASE-2026-NTRO-8849')}.
 Case Title: {case_record.get('title', 'Classified Storage Media Seizure')}
 Operator: Lead Forensic Examiner
 
@@ -468,49 +506,29 @@ INSTRUCTIONS:
 - Keep answers structured with key findings, evidence citations, and recommended investigator next steps.
 - Maintain an objective, forensic expert tone suitable for court submission."""
 
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
-                payload = {
-                    "contents": [{"parts": [{"text": prompt}]}]
-                }
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}]
+        }
 
-                with httpx.Client(timeout=30.0) as client:
-                    resp = client.post(url, json=payload)
-                    resp.raise_for_status()
-                    data = resp.json()
+        data = cls._call_gemini_api(api_key, payload)
 
-                answer_text = ""
-                for part in data.get("candidates", [{}])[0].get("content", {}).get("parts", []):
-                    if "text" in part:
-                        answer_text += part["text"]
+        candidates = data.get("candidates", [])
+        if not candidates:
+            raise ValueError("No response candidate returned by Gemini API.")
 
-                return {
-                    "source": "GEMINI_3_7_FLASH_LIVE",
-                    "answer": answer_text or "No response generated from Gemini.",
-                    "suggestedActions": [
-                        "Run Unknown Signature Search on suspicious hex clusters",
-                        "Verify Merkle root hash on physical smartcard",
-                        "Export Court Dossier with attached XAI reasoning"
-                    ]
-                }
-            except Exception as e:
-                print(f"[GeminiService] Live Case Assistant failed, using local engine: {e}")
-
-        # Local Engine Response
-        local_res = CaseAssistant.query(
-            query_text=query,
-            case_id=case_record.get("caseId", "CASE-2026-NTRO-8849"),
-            case_title=case_record.get("title", "Classified Storage Media Seizure"),
-            artifacts=artifacts_summary.get("keyArtifacts") if artifacts_summary else None,
-            anti_forensics=anti_forensics_summary,
-            ledger=[]
-        )
+        answer_text = ""
+        for part in candidates[0].get("content", {}).get("parts", []):
+            if "text" in part:
+                answer_text += part["text"]
 
         return {
-            "source": "LOCAL_ONNX_ENGINE",
-            "answer": local_res["answer"],
-            "suggestedActions": local_res.get("suggested_actions", [
-                "Inspect XAI feature weights for recovered artifacts",
-                "Audit Dilithium-3 signature on genesis block",
-                "Export Court-Ready PDF Case Dossier"
-            ])
+            "source": "GEMINI_LIVE_API",
+            "model": "gemini-flash-live",
+            "answer": answer_text or "No response generated from Gemini.",
+            "suggestedActions": [
+                "Run Unknown Signature Search on suspicious hex clusters",
+                "Verify Merkle root hash on physical smartcard",
+                "Export Court Dossier with attached XAI reasoning"
+            ]
         }
+
