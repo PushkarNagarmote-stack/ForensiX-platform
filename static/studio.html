@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForensiX Studio | Forensic Carving & Certified Zero-Data Sanitization OS</title>
+    <meta name="description" content="Forensics-Grade Certified Secure Data Sanitization (NIST SP 800-88, DoD 5220.22-M) and Deep File Recovery Suite">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Liquid Light Ambient Mesh Orbs (iPhone / visionOS Dynamic Light) -->
+    <div class="ambient-glow-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="orb orb-4"></div>
+    </div>
+
+    <div class="app-layout">
+        <!-- Top Navigation Bar -->
+        <header class="top-header">
+            <div class="brand-section">
+                <a href="/" class="brand-logo" title="Back to Landing Page">
+                    <span class="logo-icon">🛡️</span>
+                    <div class="brand-text">
+                        <span class="brand-title">Forensi<span class="brand-highlight">X</span></span>
+                        <span class="brand-subtitle">SIH FORENSIC & SANITIZATION OS</span>
+                    </div>
+                </a>
+                <div class="system-status-pill">
+                    <span class="pulse-dot"></span>
+                    <span id="systemStatusText">CORE ENGINE ACTIVE (v1.0)</span>
+                </div>
+            </div>
+
+                        <div class="header-controls">
+                <a href="/" class="btn btn-secondary btn-sm" title="Return to ForensiX Landing Page"><span>← Landing Overview</span></a>
+                <div class="disk-selector-group">
+                    <label for="activeDiskSelect">TARGET DISK:</label>
+                    <select id="activeDiskSelect" class="cyber-select">
+                        <option value="">Loading disks...</option>
+                    </select>
+                </div>
+                <button id="btnCreateSampleDisk" class="btn btn-secondary">
+                    <span>⚡ Generate Evidence Drive</span>
+                </button>
+                <button id="btnOpenGeminiSearch" class="btn btn-ai-gemini" title="Gemini 3.7 Flash Unknown Artifact & Signature Search">
+                    <span class="ai-sparkle-icon">✨</span>
+                    <span>Gemini Search</span>
+                </button>
+                <button id="btnOpenCaseAssistant" class="btn btn-ai-assistant" title="DFIR Case Intelligence Copilot">
+                    <span class="ai-bot-icon">🤖</span>
+                    <span>Ask Case Assistant</span>
+                </button>
+            </div>
+        </header>
+
+        
+
+        <!-- Floating iOS Dock Navigation -->
+        <div class="dock-nav-wrapper">
+            <nav class="nav-tabs" role="tablist">
+                <button class="tab-btn active" data-tab="tab-recovery" id="navRecovery">
+                    <span class="tab-icon">🔍</span>
+                    <span class="tab-label">Forensic Recovery & Carving</span>
+                </button>
+                <button class="tab-btn" data-tab="tab-wipe" id="navWipe">
+                    <span class="tab-icon">🛡️</span>
+                    <span class="tab-label">Secure Data Sanitization</span>
+                </button>
+                <button class="tab-btn" data-tab="tab-hex" id="navHex">
+                    <span class="tab-icon">🔬</span>
+                    <span class="tab-label">Live Hex & Sector Inspector</span>
+                </button>
+                <button class="tab-btn" data-tab="tab-certs" id="navCerts">
+                    <span class="tab-icon">📜</span>
+                    <span class="tab-label">Audit Certificate Vault</span>
+                </button>
+                <button class="tab-btn" data-tab="tab-pitch" id="navPitch">
+                    <span class="tab-icon">🏆</span>
+                    <span class="tab-label">SIH Pitch & Standards Matrix</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Main Content Area -->
+        <main class="workspace-main" id="workspaceMain">
+            <!-- Active Drive Banner -->
+            <div class="drive-banner" id="driveBanner">
+                <div class="drive-banner-info">
+                    <div class="drive-icon">💾</div>
+                    <div>
+                        <h2 id="bannerDiskName">No Disk Selected</h2>
+                        <div class="drive-meta" id="bannerDiskMeta">Select or generate a virtual disk to begin investigation.</div>
+                    </div>
+                </div>
+                <div class="drive-banner-stats">
+                    <div class="stat-box">
+                        <span class="stat-label">CAPACITY</span>
+                        <span class="stat-value" id="bannerDiskSize">-- MB</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">SHA-256 HASH</span>
+                        <span class="stat-value hash-code" id="bannerDiskHash">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 1: FORENSIC RECOVERY & CARVING -->
+            <section id="tab-recovery" class="tab-pane active">
+                <div class="pane-header">
+                    <div>
+                        <h2>Deep File Carving & Recovery Station</h2>
+                        <p class="section-desc">Raw sector header/footer reconstruction ignoring corrupted or absent filesystem allocation tables.</p>
+                    </div>
+                    <button id="btnStartCarve" class="btn btn-primary">
+                        <span>🚀 Run Deep Sector Scan</span>
+                    </button>
+                </div>
+
+                <div class="carver-stats-bar" id="carverStatsBar" style="display: none;">
+                    <div class="mini-stat">
+                        <span class="label">Sectors Scanned</span>
+                        <span class="val" id="scannedSectorsCount">0</span>
+                    </div>
+                    <div class="mini-stat">
+                        <span class="label">Carved Artifacts</span>
+                        <span class="val" id="carvedArtifactsCount">0</span>
+                    </div>
+                    <div class="mini-stat">
+                        <span class="label">Integrity Status</span>
+                        <span class="val status-ok" id="carveIntegrityStatus">100% Validated</span>
+                    </div>
+                </div>
+
+                <!-- Recovery Results Grid -->
+                <div class="recovery-grid" id="recoveryGrid">
+                    <div class="empty-state">
+                        <div class="empty-icon">📂</div>
+                        <h3>No Files Carved Yet</h3>
+                        <p>Click <strong>"Run Deep Sector Scan"</strong> to parse raw byte streams for JPEG, PNG, PDF, and confidential documents.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: SECURE DATA SANITIZATION -->
+            <section id="tab-wipe" class="tab-pane">
+                <div class="pane-header">
+                    <div>
+                        <h2>Certified Media Sanitization Station</h2>
+                        <p class="section-desc">Mathematically proven data destruction compliant with NIST SP 800-88 Rev. 1, DoD 5220.22-M, and SSD firmware sanitisers.</p>
+                    </div>
+                </div>
+
+                <div class="wipe-container">
+                    <div class="wipe-controls-panel glass-card">
+                        <h3>1. Select Sanitization Standard</h3>
+                        <div class="standard-selector">
+                            <label class="standard-radio-card active">
+                                <input type="radio" name="wipeStandard" value="NIST_CLEAR" checked>
+                                <div class="card-content">
+                                    <div class="card-title-row">
+                                        <span class="title">NIST SP 800-88 (Clear)</span>
+                                        <span class="badge badge-success">Recommended</span>
+                                    </div>
+                                    <p class="desc">1-pass logical overwrite with zero/fixed pattern + verification. Recommended by modern forensic standards for general decommission.</p>
+                                </div>
+                            </label>
+
+                            <label class="standard-radio-card">
+                                <input type="radio" name="wipeStandard" value="NIST_PURGE">
+                                <div class="card-content">
+                                    <div class="card-title-row">
+                                        <span class="title">NIST SP 800-88 (Purge)</span>
+                                        <span class="badge badge-cyan">Classified</span>
+                                    </div>
+                                    <p class="desc">3-pass pseudo-random overwrite with bitwise inversion and zero pass. Resists advanced lab-level recovery techniques.</p>
+                                </div>
+                            </label>
+
+                            <label class="standard-radio-card">
+                                <input type="radio" name="wipeStandard" value="DOD_5220_22_M">
+                                <div class="card-content">
+                                    <div class="card-title-row">
+                                        <span class="title">DoD 5220.22-M (E)</span>
+                                        <span class="badge badge-amber">3-Pass</span>
+                                    </div>
+                                    <p class="desc">Department of Defense standard: Pass 1 (zeros), Pass 2 (ones), Pass 3 (random byte) followed by sector-wide verification.</p>
+                                </div>
+                            </label>
+
+                            <label class="standard-radio-card">
+                                <input type="radio" name="wipeStandard" value="SSD_SECURE_ERASE">
+                                <div class="card-content">
+                                    <div class="card-title-row">
+                                        <span class="title">SSD Firmware Sanitize (NVMe / ATA)</span>
+                                        <span class="badge badge-purple">Flash Safe</span>
+                                    </div>
+                                    <p class="desc">Bypasses wear-leveling by purging the Flash Translation Layer (FTL) controller crypto keys and issuing TRIM block-erases.</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="operator-field">
+                            <label for="operatorInput">Forensic Examiner Name:</label>
+                            <input type="text" id="operatorInput" class="cyber-input" value="Lead Forensic Examiner (SIH 2026)">
+                        </div>
+
+                        <div class="safety-notice">
+                            <span class="safety-icon">⚠️</span>
+                            <span><strong>Zero-Data Guarantee:</strong> Once initiated, all evidence on the selected virtual image will be permanently overwritten and non-recoverable.</span>
+                        </div>
+
+                        <button id="btnStartWipe" class="btn btn-danger btn-large">
+                            <span>🔥 Execute Certified Sanitization</span>
+                        </button>
+                    </div>
+
+                    <!-- Wipe Live Execution Status -->
+                    <div class="wipe-feedback-panel glass-card">
+                        <h3>2. Real-Time Execution & Entropy Telemetry</h3>
+                        
+                        <div class="telemetry-gauge">
+                            <div class="gauge-header">
+                                <span>Shannon Sector Entropy</span>
+                                <span class="entropy-val" id="telemetryEntropy">-- bits/byte</span>
+                            </div>
+                            <div class="progress-bar-track">
+                                <div class="progress-bar-fill" id="entropyBarFill" style="width: 0%;"></div>
+                            </div>
+                            <div class="entropy-explanation" id="entropyExplanation">
+                                Higher entropy (&gt;7.0) indicates high information content. 0.0 indicates 100% verified zeroed media.
+                            </div>
+                        </div>
+
+                        <div class="wipe-status-terminal" id="wipeTerminal">
+                            <div class="terminal-line"><span class="term-dim">[SYSTEM]</span> Ready for sanitization command.</div>
+                        </div>
+
+                        <div class="cert-alert-box" id="certAlertBox" style="display: none;">
+                            <div class="cert-alert-icon">📜</div>
+                            <div class="cert-alert-info">
+                                <h4>Sanitization Complete & Audited</h4>
+                                <p id="certSuccessMsg">Certificate FX-CERT-XXXX generated successfully.</p>
+                                <a id="btnDownloadCertFromAlert" href="#" target="_blank" class="btn btn-secondary btn-sm">
+                                    <span>Download PDF Certificate</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: LIVE HEX & SECTOR INSPECTOR -->
+            <section id="tab-hex" class="tab-pane">
+                <div class="pane-header">
+                    <div>
+                        <h2>Live Sector & Raw Hex Inspector</h2>
+                        <p class="section-desc">Bit-level verification of storage sectors. Inspect headers, payload data, and sanitized zero blocks directly.</p>
+                    </div>
+                    <div class="hex-nav-controls">
+                        <label for="hexOffsetInput">Offset (Bytes):</label>
+                        <input type="number" id="hexOffsetInput" class="cyber-input num-input" value="0" step="512">
+                        <button id="btnJumpHex" class="btn btn-secondary btn-sm">Jump</button>
+                        <button id="btnPrevSector" class="btn btn-secondary btn-sm">&larr; -512B</button>
+                        <button id="btnNextSector" class="btn btn-secondary btn-sm">+512B &rarr;</button>
+                        <button id="btnAnalyzeHexInGemini" class="btn btn-ai-gemini btn-sm" title="Analyze this raw sector in Gemini 3.7 Flash">
+                            <span>✨ Analyze in Gemini</span>
+                        </button>
+                    </div>
+
+                </div>
+
+                <div class="hex-viewer-container glass-card">
+                    <div class="macos-window-bar">
+                        <div class="macos-dots">
+                            <span class="dot dot-red"></span>
+                            <span class="dot dot-yellow"></span>
+                            <span class="dot dot-green"></span>
+                        </div>
+                        <span class="macos-title">Raw Sector Stream • 512B Frame Inspector</span>
+                    </div>
+                    <div class="hex-header-row">
+                        <span class="col-offset">OFFSET</span>
+                        <span class="col-hex">00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F</span>
+                        <span class="col-ascii">ASCII</span>
+                    </div>
+                    <div class="hex-body" id="hexViewBody">
+                        <div class="terminal-loading">Select a drive to render raw hex sectors...</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: AUDIT CERTIFICATE VAULT -->
+            <section id="tab-certs" class="tab-pane">
+                <div class="pane-header">
+                    <div>
+                        <h2>Compliance Certificate Vault</h2>
+                        <p class="section-desc">Immutable audit trails for GDPR Art. 17, ISO 27001, and NIST 800-88 compliance.</p>
+                    </div>
+                    <button id="btnRefreshCerts" class="btn btn-secondary btn-sm">Refresh Vault</button>
+                </div>
+
+                <div class="certs-table-container glass-card">
+                    <table class="cyber-table">
+                        <thead>
+                            <tr>
+                                <th>Certificate UUID</th>
+                                <th>Generated Date</th>
+                                <th>Status</th>
+                                <th>File Size</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="certsTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-muted);">No certificates generated yet. Perform a wipe to create one.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB 5: SIH PITCH & STANDARDS MATRIX -->
+            <section id="tab-pitch" class="tab-pane">
+                <div class="pane-header">
+                    <div>
+                        <h2>SIH Judge Briefing & Standards Matrix</h2>
+                        <p class="section-desc">Technical cheat-sheet, architecture breakdown, and defense script for hackathon presentations.</p>
+                    </div>
+                </div>
+
+                <div class="pitch-grid">
+                    <div class="glass-card pitch-card">
+                        <h3>🏆 The Winning Pitch in 3 Points</h3>
+                        <ol class="pitch-list">
+                            <li><strong>Dual Forensic Loop</strong>: Solves both sides of data lifecycle—recovering vital evidence before decommission and guaranteeing zero data leakage afterwards.</li>
+                            <li><strong>Verifiable Mathematical Proof</strong>: We don't just "delete files". We calculate Shannon entropy drops and generate cryptographically signed NIST 800-88 PDF certificates.</li>
+                            <li><strong>SSD Wear-Leveling Awareness</strong>: Judges love this technical depth: we explain why standard multi-pass magnetic overwrites fail on flash SSDs due to FTL overprovisioning, and implement firmware Sanitize / Crypto-Erase protocols.</li>
+                        </ol>
+                    </div>
+
+                    <div class="glass-card pitch-card">
+                        <h3>⚖️ Standards Comparison Matrix</h3>
+                        <table class="cyber-table-mini">
+                            <thead>
+                                <tr>
+                                    <th>Standard</th>
+                                    <th>Passes</th>
+                                    <th>Best Suited For</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>NIST SP 800-88 Clear</strong></td>
+                                    <td>1 Pass</td>
+                                    <td>Modern Magnetic Drives</td>
+                                    <td><span class="badge badge-success">Gold Standard</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>NIST SP 800-88 Purge</strong></td>
+                                    <td>3 Passes</td>
+                                    <td>Classified Media</td>
+                                    <td><span class="badge badge-cyan">Enterprise</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>DoD 5220.22-M</strong></td>
+                                    <td>3 Passes</td>
+                                    <td>Legacy Defense Contracts</td>
+                                    <td><span class="badge badge-amber">Legacy DoD</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>ATA/NVMe Sanitize</strong></td>
+                                    <td>Firmware</td>
+                                    <td>Solid State Drives (SSDs)</td>
+                                    <td><span class="badge badge-purple">Hardware Level</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="glass-card pitch-card full-col">
+                        <h3>💡 Real-World Enterprise & Government Buyer Persona</h3>
+                        <p><strong>Target Customers</strong>: Ministry of Defence, National Informatics Centre (NIC), Banking & Financial Services (RBI/SEBI compliance), Cyber Crime Cells, and certified e-Waste recyclers needing legal proof of sanitization before hardware resale or disposal.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Hex Preview Modal -->
+    <div class="modal-backdrop" id="hexModal" style="display: none;">
+        <div class="modal-dialog glass-card">
+            <div class="modal-header">
+                <h3 id="modalTitle">Artifact Hex Inspection</h3>
+                <button class="modal-close" id="btnModalClose">&times;</button>
+            </div>
+            <div class="modal-body" id="modalHexContent">
+                <!-- Injected rows -->
+            </div>
+        </div>
+    </div>
+
+    <!-- On-Device & Gemini AI "Ask the Case" Assistant Drawer -->
+    <div class="assistant-drawer-backdrop" id="caseAssistantBackdrop" style="display: none;">
+        <div class="assistant-drawer glass-card" id="caseAssistantDrawer">
+            <div class="assistant-header">
+                <div class="assistant-header-title">
+                    <div class="assistant-icon-badge">✨</div>
+                    <div>
+                        <div class="assistant-subtitle-row">
+                            <span class="assistant-kicker">AI FORENSIC INTELLIGENCE</span>
+                            <span class="engine-badge badge-gemini" id="assistantEngineBadge">GEMINI 3.7 FLASH</span>
+                        </div>
+                        <h3 class="assistant-heading">Case Intelligence Copilot</h3>
+                    </div>
+                </div>
+                <div class="assistant-header-actions">
+                    <button id="btnDrawerOpenGeminiSearch" class="btn btn-secondary btn-xs" title="Open Dedicated Unknown Signature & Hex Search">
+                        <span>🔍 Unknown Sigs</span>
+                    </button>
+                    <button class="modal-close" id="btnCloseCaseAssistant">&times;</button>
+                </div>
+            </div>
+
+            <!-- Engine Mode Toggle Strip -->
+            <div class="assistant-mode-strip">
+                <div class="mode-toggle-group">
+                    <button class="mode-btn active" id="btnModeGemini" data-mode="GEMINI_3_7">
+                        Gemini 3.7 Flash (Cloud Engine)
+                    </button>
+                    <button class="mode-btn" id="btnModeLocal" data-mode="LOCAL_ONNX">
+                        Local Isolated (Air-Gapped)
+                    </button>
+                </div>
+                <div class="mode-desc" id="assistantModeDesc">Live Grounding + IOCs</div>
+            </div>
+
+            <!-- Quick Prompts Pill Carousel -->
+            <div class="assistant-quick-prompts">
+                <span class="prompts-label">PROMPTS:</span>
+                <button class="prompt-chip" data-prompt="Show recovered files with low confidence (<80%)">Low Confidence (&lt;80%)</button>
+                <button class="prompt-chip" data-prompt="Investigate unknown file signatures in slack space">Unknown Signatures</button>
+                <button class="prompt-chip" data-prompt="Summarize all anti-forensic findings">Anti-Forensic Findings</button>
+                <button class="prompt-chip" data-prompt="Is the Merkle ledger chain cryptographically intact?">Audit Chain of Custody</button>
+                <button class="prompt-chip" data-prompt="What NIST standard was applied to the NVMe SSD?">NIST Sanitization Rules</button>
+            </div>
+
+            <!-- Chat Message Stream -->
+            <div class="assistant-chat-stream" id="assistantChatStream">
+                <!-- Messages rendered by JS -->
+            </div>
+
+            <!-- Message Input Area -->
+            <div class="assistant-input-bar">
+                <input type="text" id="assistantInputText" class="cyber-input" placeholder="Ask a forensic question about current case artifacts, confidence, or signatures...">
+                <button id="btnAssistantSend" class="btn btn-primary btn-icon">
+                    <span id="assistantSendIcon">➔</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gemini 3.7 Flash Unknown Artifact & Signature Search Modal -->
+    <div class="modal-backdrop" id="geminiUnknownModal" style="display: none;">
+        <div class="modal-dialog modal-xl glass-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="modal-badge-icon">✨</div>
+                    <div>
+                        <div class="modal-sub-label">DEEP FORENSIC INTELLIGENCE • GEMINI 3.7 FLASH + SEARCH GROUNDING</div>
+                        <h3>Unknown Artifact &amp; Signature Investigator</h3>
+                    </div>
+                </div>
+                <div class="modal-header-actions">
+                    <button id="btnOpenApiKeyModal" class="btn btn-secondary btn-xs" title="Configure Gemini API Key">
+                        <span id="geminiKeyStatusPill">🔑 Key: Offline Mode</span>
+                    </button>
+                    <button class="modal-close" id="btnCloseGeminiModal">&times;</button>
+                </div>
+            </div>
+
+            <!-- Search Mode Tabs -->
+            <div class="gemini-tabs">
+                <button class="gemini-tab-btn active" data-search-tab="PRESETS" id="tabGeminiPresets">
+                    <span>🗂️ Mystery Presets (5)</span>
+                </button>
+                <button class="gemini-tab-btn" data-search-tab="QUERY" id="tabGeminiQuery">
+                    <span>🔎 Suspect Description</span>
+                </button>
+                <button class="gemini-tab-btn" data-search-tab="MAGIC_BYTES" id="tabGeminiBytes">
+                    <span>🧬 Magic Bytes &amp; Hex</span>
+                </button>
+                <button class="gemini-tab-btn" data-search-tab="HASH_IOC" id="tabGeminiHash">
+                    <span>#️⃣ Hash / IoC Search</span>
+                </button>
+            </div>
+
+            <div class="modal-body gemini-modal-body">
+                <!-- Tab Pane 1: Presets Grid -->
+                <div class="gemini-pane active" id="paneGeminiPresets">
+                    <div class="presets-intro">
+                        <p>Select an uncatalogued anomaly extracted from current case evidence media to run full-spectrum Gemini analysis and Google Search Grounding:</p>
+                    </div>
+                    <div class="presets-grid" id="presetsGrid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Input Controls Form -->
+                <div class="gemini-form-section">
+                    <div class="gemini-form-grid">
+                        <div class="form-group col-full">
+                            <label for="geminiQueryInput">Investigation Query / Suspect Description:</label>
+                            <input type="text" id="geminiQueryInput" class="cyber-input" placeholder="e.g. Obfuscated cryptographic keyfile in unallocated clusters or Satellite RF packet...">
+                        </div>
+                        <div class="form-group">
+                            <label for="geminiMagicBytesInput">Magic Bytes (Hex Signature):</label>
+                            <input type="text" id="geminiMagicBytesInput" class="cyber-input font-mono" placeholder="e.g. 53 41 54 5F 54 4C 4D 34">
+                        </div>
+                        <div class="form-group">
+                            <label for="geminiClaimedExtInput">Claimed Extension / Format:</label>
+                            <input type="text" id="geminiClaimedExtInput" class="cyber-input font-mono" placeholder="e.g. .tlm, .kfl, .bin, .jpg">
+                        </div>
+                        <div class="form-group col-full">
+                            <label for="geminiHexSnippetInput">Hex Snippet / Raw Sector Dump:</label>
+                            <textarea id="geminiHexSnippetInput" class="cyber-textarea font-mono" rows="2" placeholder="53 41 54 5F 54 4C 4D 34 00 1A 4F 88 DE AD BE EF..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="geminiHashInput">Artifact Hash (MD5 / SHA-256 / SSDEEP):</label>
+                            <input type="text" id="geminiHashInput" class="cyber-input font-mono" placeholder="e.g. 9e8a71b4c33984128f9d0c28374821a938c01b228947ef3a92182049d9cba831">
+                        </div>
+                        <div class="form-group">
+                            <label for="geminiContextInput">Investigation Context / Classification:</label>
+                            <input type="text" id="geminiContextInput" class="cyber-input" value="NTRO Forensics Wing • Classified Evidence Seizure">
+                        </div>
+                    </div>
+
+                    <div class="gemini-search-actions">
+                        <button id="btnExecuteGeminiSearch" class="btn btn-primary btn-glow">
+                            <span id="geminiSearchSpinner" style="display: none;">⏳</span>
+                            <span>⚡ Run Grounded Forensic Search</span>
+                        </button>
+                        <button id="btnClearGeminiInputs" class="btn btn-secondary btn-sm">Clear Fields</button>
+                    </div>
+                </div>
+
+                <!-- Results Output Container -->
+                <div class="gemini-results-container" id="geminiResultsContainer" style="display: none;">
+                    <!-- Engine Banner -->
+                    <div class="gemini-res-header">
+                        <div class="res-engine-pill">
+                            <span class="pulse-dot"></span>
+                            <span id="resEngineName">GEMINI 3.7 FLASH LIVE</span>
+                        </div>
+                        <div class="res-model-text" id="resModelText">Grounded with Global Threat &amp; Signature Databases</div>
+                    </div>
+
+                    <!-- Cards Row: Identification & Threat Assessment -->
+                    <div class="res-cards-row">
+                        <!-- Identification Card -->
+                        <div class="res-card glass-card">
+                            <div class="res-card-title">
+                                <span>🧬</span>
+                                <h4>Format Identification</h4>
+                            </div>
+                            <div class="res-card-body">
+                                <div class="res-field">
+                                    <span class="res-label">LIKELY ARTIFACT</span>
+                                    <span class="res-val highlight" id="resIdName">--</span>
+                                </div>
+                                <div class="res-field">
+                                    <span class="res-label">CLASSIFICATION</span>
+                                    <span class="res-val" id="resIdClassification">--</span>
+                                </div>
+                                <div class="res-field">
+                                    <span class="res-label">CONFIDENCE</span>
+                                    <span class="res-val" id="resIdConfidence">--%</span>
+                                </div>
+                                <div class="res-field">
+                                    <span class="res-label">KNOWN SIGNATURES</span>
+                                    <span class="res-val font-mono" id="resIdSignatures">--</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Threat Assessment Card -->
+                        <div class="res-card glass-card">
+                            <div class="res-card-title">
+                                <span>🛡️</span>
+                                <h4>Threat &amp; Risk Assessment</h4>
+                                <span class="badge" id="resThreatSeverityBadge">MEDIUM</span>
+                            </div>
+                            <div class="res-card-body">
+                                <p class="res-risk-summary" id="resRiskSummary">--</p>
+                                <div class="res-iocs-list">
+                                    <span class="res-label">INDICATORS OF COMPROMISE (IoCs):</span>
+                                    <ul id="resIocsList">
+                                        <!-- Li items -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Forensic Carving Strategy Card -->
+                    <div class="res-card glass-card">
+                        <div class="res-card-title">
+                            <span>🔬</span>
+                            <h4>Forensic Carving &amp; Extraction Strategy</h4>
+                        </div>
+                        <div class="res-card-body">
+                            <p id="resCarvingApproach">--</p>
+                            <div class="tools-row">
+                                <span class="res-label">RECOMMENDED TOOLS:</span>
+                                <div class="tools-chips" id="resToolsChips">
+                                    <!-- Tool badges -->
+                                </div>
+                            </div>
+                            <div class="regex-box">
+                                <div class="regex-header">
+                                    <span>CARVING REGEX PATTERN</span>
+                                    <button id="btnCopyRegex" class="btn btn-xs btn-secondary">📋 Copy Regex</button>
+                                </div>
+                                <code id="resCarvingRegex">--</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Google Search Grounding Sources -->
+                    <div class="res-card glass-card" id="resGroundingCard">
+                        <div class="res-card-title">
+                            <span>🌐</span>
+                            <h4>Live Grounding Sources &amp; Research Citations</h4>
+                        </div>
+                        <div class="res-card-body">
+                            <div class="grounding-queries" id="resGroundingQueries">
+                                <!-- Query chips -->
+                            </div>
+                            <div class="grounding-sources" id="resGroundingSources">
+                                <!-- Link cards -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Technical Analysis Markdown -->
+                    <div class="res-card glass-card">
+                        <div class="res-card-title">
+                            <span>📝</span>
+                            <h4>Senior DFIR Specialist Technical Assessment</h4>
+                        </div>
+                        <div class="res-card-body detailed-markdown" id="resDetailedAnalysis">
+                            <!-- Injected Markdown -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Key Configuration Modal -->
+    <div class="modal-backdrop" id="apiKeyModal" style="display: none;">
+        <div class="modal-dialog glass-card" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>Gemini 3.7 Flash API Configuration</h3>
+                <button class="modal-close" id="btnCloseApiKeyModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px;">
+                    Enter your Google Gemini API key to enable live Gemini 3.7 Flash analysis and real-time Google Search Grounding.
+                    If left unconfigured, the system automatically uses the high-fidelity air-gapped forensic knowledge engine.
+                </p>
+                <div class="form-group">
+                    <label for="geminiApiKeyInput">Gemini API Key:</label>
+                    <input type="password" id="geminiApiKeyInput" class="cyber-input font-mono" placeholder="AIzaSy...">
+                </div>
+                <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button id="btnSaveApiKey" class="btn btn-primary">Save Key</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Floating iOS Dock Navigation -->
+    <nav class="floating-dock" id="floatingDock" role="tablist" aria-label="Quick forensic navigation">
+        <button class="dock-item active" data-tab="tab-recovery" role="tab" aria-selected="true" title="Deep File Carver">
+            <span class="dock-item-icon">🔍</span>
+            <span class="dock-item-label">Carver</span>
+        </button>
+        <button class="dock-item" data-tab="tab-wipe" role="tab" aria-selected="false" title="Certified Sanitization">
+            <span class="dock-item-icon">🛡️</span>
+            <span class="dock-item-label">Sanitize</span>
+        </button>
+        <button class="dock-item" data-tab="tab-hex" role="tab" aria-selected="false" title="Raw Hex & Sector Inspector">
+            <span class="dock-item-icon">🔬</span>
+            <span class="dock-item-label">Hex</span>
+        </button>
+        <button class="dock-item" data-tab="tab-certs" role="tab" aria-selected="false" title="Audit Certificate Vault">
+            <span class="dock-item-icon">📜</span>
+            <span class="dock-item-label">Certs</span>
+        </button>
+        <button class="dock-item" data-tab="tab-pitch" role="tab" aria-selected="false" title="SIH Defense Matrix">
+            <span class="dock-item-icon">🏆</span>
+            <span class="dock-item-label">Matrix</span>
+        </button>
+        <button class="dock-item" id="dockBtnAiAssistant" role="tab" aria-selected="false" title="DFIR AI Assistant">
+            <span class="dock-item-icon">🤖</span>
+            <span class="dock-item-label">AI Copilot</span>
+        </button>
+    </nav>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
+</body>
+</html>
