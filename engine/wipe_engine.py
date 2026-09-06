@@ -81,6 +81,17 @@ class WipeEngine:
         pre_hash = DiskManager.calculate_sha256(disk_path)
         pre_entropy = WipeEngine.sample_disk_entropy(disk_path)
 
+        # Normalize standard aliases
+        std_norm = (standard or "NIST_CLEAR").upper().replace("-", "_").replace(" ", "_")
+        if "CLEAR" in std_norm:
+            standard = "NIST_CLEAR"
+        elif "PURGE" in std_norm:
+            standard = "NIST_PURGE"
+        elif "DOD" in std_norm or "5220" in std_norm:
+            standard = "DOD_5220_22_M"
+        elif "SSD" in std_norm or "ERASE" in std_norm or "NVME" in std_norm:
+            standard = "SSD_SECURE_ERASE"
+
         # Configure passes according to standard
         passes_plan = []
         standard_desc = ""

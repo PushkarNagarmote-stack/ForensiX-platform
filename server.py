@@ -204,6 +204,8 @@ def carve_disk(req: CarveRequest):
         
         result = RecoveryEngine.carve_disk(req.disk_path)
         return {"success": True, "data": result}
+    except HTTPException:
+        raise
     except SafetyException as e:
         raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
@@ -228,10 +230,13 @@ def wipe_disk(req: WipeRequest):
             "wipe_result": wipe_result,
             "certificate": cert_result
         }
+    except HTTPException:
+        raise
     except SafetyException as e:
         raise HTTPException(status_code=403, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/api/certificates")
 def list_certificates():
