@@ -10,6 +10,20 @@ let activeDisk = null;
 let currentHexOffset = 0;
 let lastCarvedFiles = [];
 
+// Base API URL configuration - supports cross-domain backend (e.g. Render) or same-origin (relative)
+let API_BASE = window.FORENSIX_API_URL || localStorage.getItem("forensix_api_base") || "";
+
+function getApiUrl(path) {
+    if (!API_BASE) return path;
+    const base = API_BASE.replace(/\/+$/, "");
+    const p = path.startsWith("/") ? path : `/${path}`;
+    return `${base}${p}`;
+}
+
+async function apiFetch(url, options) {
+    return fetch(getApiUrl(url), options);
+}
+
 // DOM Elements
 const activeDiskSelect = document.getElementById("activeDiskSelect");
 const btnCreateSampleDisk = document.getElementById("btnCreateSampleDisk");
@@ -347,7 +361,7 @@ function setupEventListeners() {
         btnCreateSampleDisk.innerHTML = `<span>⏳ Generating...</span>`;
         try {
             const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(11, 19);
-            const res = await fetch("/api/disks/create-sample", {
+            const res = await apiFetch("/api/disks/create-sample", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -448,7 +462,7 @@ function setupEventListeners() {
 // Load Disks from API
 async function loadDisks(selectPath = null) {
     try {
-        const res = await fetch("/api/disks");
+        const res = await apiFetch("/api/disks");
         const data = await res.json();
         currentDisks = data.disks || [];
 
@@ -477,7 +491,7 @@ async function loadDisks(selectPath = null) {
 }
 
 async function autoCreateDefaultDisk() {
-    const res = await fetch("/api/disks/create-sample", {
+    const res = await apiFetch("/api/disks/create-sample", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ filename: "forensic_demo_drive.img", size_mb: 5 })
@@ -518,7 +532,7 @@ async function runCarver() {
 
     try {
         playHapticTone("click");
-        const res = await fetch("/api/carve", {
+        const res = await apiFetch("/api/carve", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ disk_path: activeDisk.path })
@@ -654,7 +668,7 @@ async function runWipe() {
     }
 
     try {
-        const res = await fetch("/api/wipe", {
+        const res = await apiFetch("/api/wipe", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -684,7 +698,7 @@ async function runWipe() {
 
             // Show Certificate Alert
             certSuccessMsg.textContent = `Certificate ${cert.cert_id} generated. Verified compliant with NIST SP 800-88 & DoD 5220.22-M.`;
-            btnDownloadCertFromAlert.href = cert.web_url;
+            btnDownloadCertFromAlert.href = getApiUrl(cert.web_url);
             certAlertBox.style.display = "flex";
 
             // Refresh Disk info & Hex view
@@ -728,7 +742,7 @@ async function loadHexView() {
     hexViewBody.innerHTML = `<div class="terminal-loading">Reading raw sector bytes at offset ${currentHexOffset}...</div>`;
 
     try {
-        const res = await fetch(`/api/hex-view?disk_path=${encodeURIComponent(activeDisk.path)}&offset=${currentHexOffset}&length=256`);
+        const res = await apiFetch(`/api/hex-view?disk_path=${encodeURIComponent(activeDisk.path)}&offset=${currentHexOffset}&length=256`);
         const data = await res.json();
 
         if (!data.rows || data.rows.length === 0) {
@@ -758,7 +772,7 @@ window.inspectCarvedBytes = async function(byteOffset, filename) {
     hexModal.style.display = "flex";
 
     try {
-        const res = await fetch(`/api/hex-view?disk_path=${encodeURIComponent(activeDisk.path)}&offset=${byteOffset}&length=384`);
+        const res = await apiFetch(`/api/hex-view?disk_path=${encodeURIComponent(activeDisk.path)}&offset=${byteOffset}&length=384`);
         const data = await res.json();
         
         modalHexContent.innerHTML = `
@@ -788,7 +802,7 @@ window.inspectCarvedBytes = async function(byteOffset, filename) {
 // ==========================================================================
 async function loadCertificates() {
     try {
-        const res = await fetch("/api/certificates");
+        const res = await apiFetch("/api/certificates");
         const data = await res.json();
         const certs = data.certificates || [];
 
@@ -813,7 +827,7 @@ async function loadCertificates() {
                 <td><span class="badge badge-success">Cryptographically Audited</span></td>
                 <td>${sizeKb} KB</td>
                 <td>
-                    <a href="${c.download_url}" target="_blank" class="btn btn-secondary btn-sm">
+                    <a href="${getApiUrl(c.download_url)}" target="_blank" class="btn btn-secondary btn-sm">
                         <span>📥 Download PDF</span>
                     </a>
                 </td>
@@ -874,7 +888,7 @@ let hasGeminiApiKey = false;
 
 async function checkGeminiStatus() {
     try {
-        const res = await fetch("/api/gemini/status");
+        const res = await apiFetch("/api/gemini/status");
         const data = await res.json();
         hasGeminiApiKey = data.hasKey || false;
 
@@ -1111,7 +1125,7 @@ async function sendAssistantMessage(overrideText) {
     ];
 
     try {
-        const res = await fetch("/api/gemini/case-assistant", {
+        const res = await apiFetch("/api/gemini/case-assistant", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1302,7 +1316,7 @@ function openGeminiUnknownSearchModal(params = {}) {
 
 async function loadGeminiPresets() {
     try {
-        const res = await fetch("/api/gemini/presets");
+        const res = await apiFetch("/api/gemini/presets");
         const data = await res.json();
         mysteryPresets = data.presets || [];
         renderPresetsGrid();
@@ -1363,7 +1377,7 @@ async function executeGeminiSearch() {
     if (spinner) spinner.style.display = "inline";
 
     try {
-        const res = await fetch("/api/gemini/unknown-search", {
+        const res = await apiFetch("/api/gemini/unknown-search", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1522,7 +1536,7 @@ function setupApiKeyModal() {
         btnSave.addEventListener("click", async () => {
             const key = inputKey.value.trim();
             try {
-                const res = await fetch("/api/gemini/configure", {
+                const res = await apiFetch("/api/gemini/configure", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ apiKey: key })

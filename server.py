@@ -275,5 +275,8 @@ app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn
-    print("Starting ForensiX Platform on http://127.0.0.1:8085")
-    uvicorn.run(app, host="127.0.0.1", port=8085)
+    port = int(os.environ.get("PORT", 8085))
+    host = os.environ.get("HOST", "0.0.0.0")
+    print(f"Starting ForensiX Platform on http://{host}:{port}")
+    uvicorn.run(app, host=host, port=port)
+
