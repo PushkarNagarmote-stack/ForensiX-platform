@@ -10,8 +10,12 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DISKS_DIR = BASE_DIR / "data" / "disks"
-DISKS_DIR.mkdir(parents=True, exist_ok=True)
+BASE_DATA_DIR = Path("/tmp/forensix_data") if (os.environ.get("VERCEL") or not os.access(BASE_DIR, os.W_OK)) else BASE_DIR / "data"
+DISKS_DIR = BASE_DATA_DIR / "disks"
+try:
+    DISKS_DIR.mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
 
 class SafetyException(Exception):
     """Raised when an unsafe disk operation is attempted."""

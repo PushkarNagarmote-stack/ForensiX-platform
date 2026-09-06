@@ -12,8 +12,12 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-CERTS_DIR = BASE_DIR / "data" / "certificates"
-CERTS_DIR.mkdir(parents=True, exist_ok=True)
+BASE_DATA_DIR = Path("/tmp/forensix_data") if (os.environ.get("VERCEL") or not os.access(BASE_DIR, os.W_OK)) else BASE_DIR / "data"
+CERTS_DIR = BASE_DATA_DIR / "certificates"
+try:
+    CERTS_DIR.mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
 
 class CertificateGenerator:
     """

@@ -10,8 +10,12 @@ from engine.disk_manager import DiskManager, SafetyException
 from engine.wipe_engine import WipeEngine
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-RECOVERED_DIR = BASE_DIR / "data" / "recovered"
-RECOVERED_DIR.mkdir(parents=True, exist_ok=True)
+BASE_DATA_DIR = Path("/tmp/forensix_data") if (os.environ.get("VERCEL") or not os.access(BASE_DIR, os.W_OK)) else BASE_DIR / "data"
+RECOVERED_DIR = BASE_DATA_DIR / "recovered"
+try:
+    RECOVERED_DIR.mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
 
 class RecoveryEngine:
     """

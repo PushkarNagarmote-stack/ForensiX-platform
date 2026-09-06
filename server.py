@@ -258,7 +258,10 @@ def serve_recovered_file(disk_stem: str, filename: str):
 
 # Mount static frontend
 STATIC_DIR = ROOT_DIR / "static"
-STATIC_DIR.mkdir(parents=True, exist_ok=True)
+try:
+    STATIC_DIR.mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
 
 @app.get("/studio")
 @app.get("/app")
