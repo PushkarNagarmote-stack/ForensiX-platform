@@ -29,7 +29,7 @@
                     <span class="logo-icon">🛡️</span>
                     <div class="brand-text">
                         <span class="brand-title">Forensi<span class="brand-highlight">X</span></span>
-                        <span class="brand-subtitle">SIH FORENSIC & SANITIZATION OS</span>
+                        <span class="brand-subtitle">SMART INDIA HACKATHON 2026 • SIH26149</span>
                     </div>
                 </a>
                 <div class="system-status-pill">
@@ -65,25 +65,29 @@
         <!-- Floating iOS Dock Navigation -->
         <div class="dock-nav-wrapper">
             <nav class="nav-tabs" role="tablist">
-                <button class="tab-btn active" data-tab="tab-recovery" id="navRecovery">
+                <button class="tab-btn active" data-tab="tab-pipeline" id="navPipeline">
+                    <span class="tab-icon">⚡</span>
+                    <span class="tab-label">Guided Pipeline (SIH26149)</span>
+                </button>
+                <button class="tab-btn" data-tab="tab-recovery" id="navRecovery">
                     <span class="tab-icon">🔍</span>
-                    <span class="tab-label">Forensic Recovery & Carving</span>
+                    <span class="tab-label">Pre-Wipe Carver</span>
                 </button>
                 <button class="tab-btn" data-tab="tab-wipe" id="navWipe">
                     <span class="tab-icon">🛡️</span>
-                    <span class="tab-label">Secure Data Sanitization</span>
+                    <span class="tab-label">Sanitization Console</span>
                 </button>
                 <button class="tab-btn" data-tab="tab-hex" id="navHex">
                     <span class="tab-icon">🔬</span>
-                    <span class="tab-label">Live Hex & Sector Inspector</span>
+                    <span class="tab-label">Live Hex Inspector</span>
                 </button>
                 <button class="tab-btn" data-tab="tab-certs" id="navCerts">
                     <span class="tab-icon">📜</span>
-                    <span class="tab-label">Audit Certificate Vault</span>
+                    <span class="tab-label">Certificate Vault</span>
                 </button>
                 <button class="tab-btn" data-tab="tab-pitch" id="navPitch">
                     <span class="tab-icon">🏆</span>
-                    <span class="tab-label">SIH Pitch & Standards Matrix</span>
+                    <span class="tab-label">SIH Defense Matrix</span>
                 </button>
             </nav>
         </div>
@@ -108,19 +112,210 @@
                         <span class="stat-label">SHA-256 HASH</span>
                         <span class="stat-value hash-code" id="bannerDiskHash">--</span>
                     </div>
+                    <div class="stat-box">
+                        <span class="stat-label">STATUS</span>
+                        <span class="stat-value" id="bannerDiskStatus" style="color:var(--fx-green); font-weight:700; font-size:12px;">🟢 EVIDENCE READY</span>
+                    </div>
                 </div>
             </div>
 
+            <!-- TAB 0: GUIDED VERIFICATION PIPELINE (Matches SIH26149 PPT) -->
+            <section id="tab-pipeline" class="tab-pane active">
+                <div class="pipeline-card glass-card">
+                    <!-- Top Kicker & Title -->
+                    <div class="pipeline-header">
+                        <div class="pipeline-kicker">
+                            <span class="pulse-dot"></span>
+                            <span>SIH26149 WORKFLOW • "RECOVERY BECOMES THE VERIFICATION LAYER"</span>
+                        </div>
+                        <h2 class="pipeline-title">Autonomous 4-Step Verification Pipeline</h2>
+                        <p class="pipeline-desc">
+                            Execute the complete end-to-end forensic lifecycle: detect storage media, perform certified erasure, automatically attempt file recovery to verify data destruction, and generate an immutable court-admissible PDF certificate.
+                        </p>
+                    </div>
+
+                    <!-- 4-Stage Visual Stepper -->
+                    <div class="pipeline-stepper">
+                        <div class="step-card active" id="step1Card">
+                            <div class="step-num">01</div>
+                            <div class="step-info">
+                                <span class="step-phase">DISCOVERY</span>
+                                <span class="step-title">Device Detection</span>
+                                <span class="step-badge" id="step1Badge">Drive Ready</span>
+                            </div>
+                        </div>
+                        <div class="step-arrow">➔</div>
+                        <div class="step-card" id="step2Card">
+                            <div class="step-num">02</div>
+                            <div class="step-info">
+                                <span class="step-phase">SANITIZE</span>
+                                <span class="step-title">Certified Erase</span>
+                                <span class="step-badge" id="step2Badge">NIST SP 800-88</span>
+                            </div>
+                        </div>
+                        <div class="step-arrow">➔</div>
+                        <div class="step-card" id="step3Card">
+                            <div class="step-num">03</div>
+                            <div class="step-info">
+                                <span class="step-phase">AUDIT & VALIDATE</span>
+                                <span class="step-title">Recovery Verification</span>
+                                <span class="step-badge" id="step3Badge">Carver Check</span>
+                            </div>
+                        </div>
+                        <div class="step-arrow">➔</div>
+                        <div class="step-card" id="step4Card">
+                            <div class="step-num">04</div>
+                            <div class="step-info">
+                                <span class="step-phase">EVIDENCE</span>
+                                <span class="step-title">Audit Certificate</span>
+                                <span class="step-badge" id="step4Badge">PDF Sealed</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Control & Configuration Row -->
+                    <div class="pipeline-controls">
+                        <div class="pipeline-form-row">
+                            <div class="pipeline-field">
+                                <label for="pipelineStandardSelect">Select Sanitization Standard:</label>
+                                <select id="pipelineStandardSelect" class="cyber-select">
+                                    <option value="NIST_CLEAR" selected>NIST SP 800-88 Rev. 1 (Clear) — 1-Pass Overwrite</option>
+                                    <option value="NIST_PURGE">NIST SP 800-88 Rev. 1 (Purge) — 3-Pass Multi-Stage</option>
+                                    <option value="DOD_5220_22_M">DoD 5220.22-M (E) — 3-Pass Defense Standard</option>
+                                    <option value="SSD_SECURE_ERASE">SSD Firmware Sanitize — ATA / NVMe Unit Purge</option>
+                                </select>
+                            </div>
+                            <div class="pipeline-field">
+                                <label for="pipelineOperatorInput">Forensic Examiner Name:</label>
+                                <input type="text" id="pipelineOperatorInput" class="cyber-input" value="Lead Forensic Examiner (SIH26149)">
+                            </div>
+                            <div class="pipeline-action-field">
+                                <button id="btnRunFullPipeline" class="btn btn-primary btn-large btn-glow">
+                                    <span id="pipelineBtnIcon">⚡</span>
+                                    <span id="pipelineBtnText">Run Full Verification Pipeline</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Progress & Telemetry Stage -->
+                    <div class="pipeline-live-tracker" id="pipelineLiveTracker" style="display: none;">
+                        <div class="tracker-header">
+                            <span class="tracker-stage" id="trackerStage">STAGE 1: EXECUTING SANITIZATION</span>
+                            <span class="tracker-entropy" id="trackerEntropy">Shannon Entropy: Calculating...</span>
+                        </div>
+                        <div class="tracker-track">
+                            <div class="tracker-fill" id="trackerFill" style="width: 15%;"></div>
+                        </div>
+                        <div class="tracker-terminal" id="pipelineTerminalLog">
+                            <div class="tracker-line">[PIPELINE] Initialising autonomous verification workflow...</div>
+                        </div>
+                    </div>
+
+                    <!-- Final Verification Verdict Banner (Decision Gate from Slide 3 of PPT) -->
+                    <div class="verdict-banner" id="verdictBanner" style="display: none;">
+                        <div class="verdict-left">
+                            <div class="verdict-badge-icon" id="verdictBadgeIcon">✅</div>
+                            <div>
+                                <div class="verdict-gate-text">
+                                    <span>PPT VERIFICATION GATE: </span>
+                                    <strong>RECOVERABLE TRACES FOUND? NO</strong>
+                                </div>
+                                <h3 class="verdict-title" id="verdictTitle">VERIFIED: 100% UNRECOVERABLE</h3>
+                                <p class="verdict-desc" id="verdictDesc">
+                                    Post-wipe deep sector carver identified <strong>0 recoverable files</strong>. Shannon entropy confirms <strong>0.0000 bits/byte</strong> zero-leak confidence.
+                                </p>
+                                <div class="verdict-stats-row">
+                                    <div class="verdict-stat-chip">
+                                        <span class="chip-label">POST-WIPE ENTROPY:</span>
+                                        <span class="chip-val" id="verdictEntropyScore">0.0000</span>
+                                    </div>
+                                    <div class="verdict-stat-chip">
+                                        <span class="chip-label">RESIDUAL FILES:</span>
+                                        <span class="chip-val" id="verdictResidualFiles">0 items</span>
+                                    </div>
+                                    <div class="verdict-stat-chip">
+                                        <span class="chip-label">SECTORS VERIFIED:</span>
+                                        <span class="chip-val" id="verdictSectorsScanned">10,240</span>
+                                    </div>
+                                    <div class="verdict-stat-chip">
+                                        <span class="chip-label">STANDARD:</span>
+                                        <span class="chip-val" id="verdictStandardName">NIST SP 800-88</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="verdict-right">
+                            <a id="btnVerdictDownloadCert" href="#" target="_blank" class="btn btn-primary btn-large btn-glow">
+                                <span>📜 Download Audit Certificate</span>
+                            </a>
+                            <button class="btn btn-secondary btn-sm" onclick="window.switchForensicTab('tab-hex')">
+                                <span>🔬 Inspect Raw Zero Sectors</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Visual Architecture Guide directly below pipeline -->
+                <div class="pipeline-guide-cards">
+                    <div class="guide-card glass-card">
+                        <div class="guide-icon">🔍</div>
+                        <div>
+                            <h4>Step 1: Deep Sector Carving (Salvage)</h4>
+                            <p>Scans raw binary clusters for JPEG, PNG, PDF, and confidential documents before media destruction.</p>
+                        </div>
+                    </div>
+                    <div class="guide-card glass-card">
+                        <div class="guide-icon">🛡️</div>
+                        <div>
+                            <h4>Step 2: Certified Data Erase (Sanitize)</h4>
+                            <p>Executes multi-pass overwrite sequences conforming to NIST SP 800-88 Clear & Purge and DoD 5220.22-M.</p>
+                        </div>
+                    </div>
+                    <div class="guide-card glass-card">
+                        <div class="guide-icon">📉</div>
+                        <div>
+                            <h4>Step 3: Verification & Entropy Proof</h4>
+                            <p>Carver attempts recovery on the sanitized media. Achieving 0 files and H = 0.0000 mathematically proves clean erasure.</p>
+                        </div>
+                    </div>
+                    <div class="guide-card glass-card">
+                        <div class="guide-icon">📜</div>
+                        <div>
+                            <h4>Step 4: Tamper-Evident Report</h4>
+                            <p>Compiles court-admissible ReportLab PDF certificates with drive serials, hashes, and cryptographic signatures.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- TAB 1: FORENSIC RECOVERY & CARVING -->
-            <section id="tab-recovery" class="tab-pane active">
+            <section id="tab-recovery" class="tab-pane">
                 <div class="pane-header">
                     <div>
                         <h2>Deep File Carving & Recovery Station</h2>
                         <p class="section-desc">Raw sector header/footer reconstruction ignoring corrupted or absent filesystem allocation tables.</p>
                     </div>
-                    <button id="btnStartCarve" class="btn btn-primary">
-                        <span>🚀 Run Deep Sector Scan</span>
-                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="btnCarverQuickSeed" class="btn btn-secondary">
+                            <span>⚡ Mount Fresh Evidence Drive</span>
+                        </button>
+                        <button id="btnStartCarve" class="btn btn-primary">
+                            <span>🚀 Run Deep Sector Scan</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Drive State & Carving Readiness Indicator -->
+                <div class="carver-media-status-banner" id="carverMediaStatusBanner" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; margin-bottom: 18px; border-radius: 12px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25);">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 20px;" id="carverStatusIcon">🟢</span>
+                        <div>
+                            <div style="font-weight: 600; font-size: 13px; color: var(--fx-green);" id="carverStatusTitle">Target Media: Intact Evidence Detected</div>
+                            <div style="font-size: 11px; color: var(--text-secondary);" id="carverStatusDesc">Synthetic evidence files (JPEG, PNG, PDF, ZIP, TXT) are seeded across raw sectors. Ready for deep recovery.</div>
+                        </div>
+                    </div>
+                    <span class="status-pill status-ready" id="carverStatusBadge" style="font-size: 11px;">EVIDENCE LOADED</span>
                 </div>
 
                 <div class="carver-stats-bar" id="carverStatsBar" style="display: none;">
@@ -690,7 +885,11 @@
 
     <!-- Floating iOS Dock Navigation -->
     <nav class="floating-dock" id="floatingDock" role="tablist" aria-label="Quick forensic navigation">
-        <button class="dock-item active" data-tab="tab-recovery" role="tab" aria-selected="true" title="Deep File Carver">
+        <button class="dock-item active" data-tab="tab-pipeline" role="tab" aria-selected="true" title="Guided Pipeline">
+            <span class="dock-item-icon">⚡</span>
+            <span class="dock-item-label">Pipeline</span>
+        </button>
+        <button class="dock-item" data-tab="tab-recovery" role="tab" aria-selected="false" title="Deep File Carver">
             <span class="dock-item-icon">🔍</span>
             <span class="dock-item-label">Carver</span>
         </button>

@@ -52,3 +52,7 @@ data/certificates/*.pdf
 *.swo
 .DS_Store
 Thumbs.db
+
+# Scratch and experiments
+codenest/
+extracted_ppt.txt

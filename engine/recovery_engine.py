@@ -206,7 +206,8 @@ class RecoveryEngine:
                     "status": "Intact",
                     "validation_msg": "Plaintext credential key-pairs recovered from raw sectors",
                     "path": str(out_path),
-                    "web_url": f"/api/recovered/{disk_path.stem}/{out_name}"
+                    "web_url": f"/api/recovered/{disk_path.stem}/{out_name}",
+                    "preview_snippet": txt_bytes[:280].decode("utf-8", errors="replace")
                 })
                 file_counter += 1
 

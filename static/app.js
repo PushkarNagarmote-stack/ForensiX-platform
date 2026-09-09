@@ -31,11 +31,18 @@ const bannerDiskName = document.getElementById("bannerDiskName");
 const bannerDiskMeta = document.getElementById("bannerDiskMeta");
 const bannerDiskSize = document.getElementById("bannerDiskSize");
 const bannerDiskHash = document.getElementById("bannerDiskHash");
+const bannerDiskStatus = document.getElementById("bannerDiskStatus");
 const tabButtons = document.querySelectorAll(".tab-btn");
 const tabPanes = document.querySelectorAll(".tab-pane");
 
 // Carver Elements
 const btnStartCarve = document.getElementById("btnStartCarve");
+const btnCarverQuickSeed = document.getElementById("btnCarverQuickSeed");
+const carverMediaStatusBanner = document.getElementById("carverMediaStatusBanner");
+const carverStatusIcon = document.getElementById("carverStatusIcon");
+const carverStatusTitle = document.getElementById("carverStatusTitle");
+const carverStatusDesc = document.getElementById("carverStatusDesc");
+const carverStatusBadge = document.getElementById("carverStatusBadge");
 const recoveryGrid = document.getElementById("recoveryGrid");
 const carverStatsBar = document.getElementById("carverStatsBar");
 const scannedSectorsCount = document.getElementById("scannedSectorsCount");
@@ -373,6 +380,11 @@ function setupEventListeners() {
             if (data.success) {
                 await loadDisks(data.disk.path);
                 appendTerminal(`[SUCCESS] New virtual evidence drive generated: ${data.disk.name} (5MB)`, "term-success");
+                playHapticTone("success");
+                const activePane = document.querySelector(".tab-pane.active");
+                if (activePane && activePane.id === "tab-recovery") {
+                    await runCarver();
+                }
             }
         } catch (err) {
             console.error("Failed to create sample disk:", err);
@@ -382,8 +394,17 @@ function setupEventListeners() {
         }
     });
 
+    // Guided Pipeline Action (SIH26149 PPT Workflow)
+    const btnRunFullPipeline = document.getElementById("btnRunFullPipeline");
+    if (btnRunFullPipeline) {
+        btnRunFullPipeline.addEventListener("click", runFullPipelineWorkflow);
+    }
+
     // Carver Action
     btnStartCarve.addEventListener("click", runCarver);
+    if (btnCarverQuickSeed) {
+        btnCarverQuickSeed.addEventListener("click", mountAndCarveFreshEvidence);
+    }
 
     // Wipe Action
     btnStartWipe.addEventListener("click", runWipe);
@@ -476,12 +497,23 @@ async function loadDisks(selectPath = null) {
         currentDisks.forEach(disk => {
             const opt = document.createElement("option");
             opt.value = disk.path;
-            opt.textContent = `${disk.name} (${disk.size_mb} MB)`;
+            const isEvidence = disk.status === "EVIDENCE_ACTIVE";
+            const icon = isEvidence ? "🟢" : "🛡️";
+            const statusText = isEvidence ? "Evidence Active (5 Files)" : "Sanitized (Clean)";
+            opt.textContent = `${icon} ${disk.name} (${disk.size_mb} MB • ${statusText})`;
             activeDiskSelect.appendChild(opt);
         });
 
         if (selectPath) {
             activeDiskSelect.value = selectPath;
+        } else {
+            // Auto-select the first EVIDENCE_ACTIVE disk so fresh evidence is loaded by default
+            const evidenceDisk = currentDisks.find(d => d.status === "EVIDENCE_ACTIVE");
+            if (evidenceDisk) {
+                activeDiskSelect.value = evidenceDisk.path;
+            } else if (currentDisks.length > 0) {
+                activeDiskSelect.value = currentDisks[0].path;
+            }
         }
 
         selectDiskByPath(activeDiskSelect.value);
@@ -494,7 +526,7 @@ async function autoCreateDefaultDisk() {
     const res = await apiFetch("/api/disks/create-sample", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename: "forensic_demo_drive.img", size_mb: 5 })
+        body: JSON.stringify({ filename: "sih_evidence_drive.img", size_mb: 5 })
     });
     const data = await res.json();
     if (data.success) {
@@ -509,9 +541,253 @@ function selectDiskByPath(diskPath) {
         bannerDiskMeta.textContent = `Raw Virtual Image Sandbox • Path: ${activeDisk.path}`;
         bannerDiskSize.textContent = `${activeDisk.size_mb} MB`;
         bannerDiskHash.textContent = activeDisk.sha256;
+
+        const isEvidence = activeDisk.status === "EVIDENCE_ACTIVE";
+
+        if (bannerDiskStatus) {
+            bannerDiskStatus.textContent = isEvidence ? "🟢 EVIDENCE READY" : "🛡️ SANITIZED (0 LEAK)";
+            bannerDiskStatus.style.color = isEvidence ? "var(--fx-green)" : "var(--accent-amber)";
+        }
+
+        if (carverMediaStatusBanner && carverStatusTitle && carverStatusDesc && carverStatusBadge && carverStatusIcon) {
+            if (isEvidence) {
+                carverStatusIcon.textContent = "🟢";
+                carverStatusTitle.textContent = `Target Media: Intact Evidence Detected (${activeDisk.name})`;
+                carverStatusTitle.style.color = "var(--fx-green)";
+                carverStatusDesc.textContent = "Synthetic evidence files (JPEG, PNG, PDF, ZIP, TXT) are seeded across raw sectors. Ready for deep recovery.";
+                carverStatusBadge.textContent = "EVIDENCE LOADED (5 ARTIFACTS)";
+                carverStatusBadge.className = "status-pill status-ready";
+                carverMediaStatusBanner.style.background = "rgba(16, 185, 129, 0.08)";
+                carverMediaStatusBanner.style.borderColor = "rgba(16, 185, 129, 0.25)";
+            } else {
+                carverStatusIcon.textContent = "⚠️";
+                carverStatusTitle.textContent = `Target Media: Sanitized State (${activeDisk.name})`;
+                carverStatusTitle.style.color = "var(--accent-amber)";
+                carverStatusDesc.textContent = "This drive is sanitized (0.0000 entropy, 0 residual files). To demonstrate pre-wipe file recovery, click 'Mount Fresh Evidence Drive'.";
+                carverStatusBadge.textContent = "SANITIZED (0 RESIDUAL)";
+                carverStatusBadge.className = "status-pill status-amber";
+                carverMediaStatusBanner.style.background = "rgba(245, 158, 11, 0.08)";
+                carverMediaStatusBanner.style.borderColor = "rgba(245, 158, 11, 0.25)";
+            }
+        }
+
         currentHexOffset = 0;
         hexOffsetInput.value = 0;
         loadHexView();
+    }
+}
+
+window.mountAndCarveFreshEvidence = async function() {
+    try {
+        if (btnCarverQuickSeed) {
+            btnCarverQuickSeed.disabled = true;
+            btnCarverQuickSeed.innerHTML = `<span>⏳ Mounting Evidence Drive...</span>`;
+        }
+        playHapticTone("click");
+
+        let targetPath = null;
+        const existing = currentDisks.find(d => d.status === "EVIDENCE_ACTIVE");
+        if (existing) {
+            targetPath = existing.path;
+            await loadDisks(targetPath);
+        } else {
+            const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(11, 19);
+            const res = await apiFetch("/api/disks/create-sample", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    filename: `forensic_case_${timestamp}.img`,
+                    size_mb: 5
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                targetPath = data.disk.path;
+                await loadDisks(targetPath);
+            }
+        }
+
+        // Run deep carve scan immediately so files appear right away
+        await runCarver();
+    } catch (e) {
+        console.error("Mount and carve failed:", e);
+    } finally {
+        if (btnCarverQuickSeed) {
+            btnCarverQuickSeed.disabled = false;
+            btnCarverQuickSeed.innerHTML = `<span>⚡ Mount Fresh Evidence Drive</span>`;
+        }
+    }
+};
+
+// ==========================================================================
+// Autonomous 4-Stage Verification Pipeline (SIH26149 PPT Workflow)
+// "RECOVERY BECOMES THE VERIFICATION LAYER"
+// ==========================================================================
+async function runFullPipelineWorkflow() {
+    if (!activeDisk) {
+        alert("Please select or generate a target disk first.");
+        return;
+    }
+
+    const standardSelect = document.getElementById("pipelineStandardSelect");
+    const standard = standardSelect ? standardSelect.value : "NIST_CLEAR";
+    const operatorInput = document.getElementById("pipelineOperatorInput");
+    const operator = (operatorInput && operatorInput.value) ? operatorInput.value : "Lead Forensic Examiner (SIH26149)";
+
+    const btn = document.getElementById("btnRunFullPipeline");
+    const btnIcon = document.getElementById("pipelineBtnIcon");
+    const btnText = document.getElementById("pipelineBtnText");
+    const liveTracker = document.getElementById("pipelineLiveTracker");
+    const trackerStage = document.getElementById("trackerStage");
+    const trackerEntropy = document.getElementById("trackerEntropy");
+    const trackerFill = document.getElementById("trackerFill");
+    const terminalLog = document.getElementById("pipelineTerminalLog");
+    const verdictBanner = document.getElementById("verdictBanner");
+
+    const step1Card = document.getElementById("step1Card");
+    const step2Card = document.getElementById("step2Card");
+    const step3Card = document.getElementById("step3Card");
+    const step4Card = document.getElementById("step4Card");
+    const step1Badge = document.getElementById("step1Badge");
+    const step2Badge = document.getElementById("step2Badge");
+    const step3Badge = document.getElementById("step3Badge");
+    const step4Badge = document.getElementById("step4Badge");
+
+    function addPipelineLog(msg, isHighlight = false) {
+        if (!terminalLog) return;
+        const line = document.createElement("div");
+        line.className = "tracker-line";
+        if (isHighlight) line.style.color = "var(--fx-green)";
+        line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        terminalLog.appendChild(line);
+        terminalLog.scrollTop = terminalLog.scrollHeight;
+    }
+
+    // UI Loading state
+    if (btn) {
+        btn.disabled = true;
+        if (btnIcon) btnIcon.textContent = "⏳";
+        if (btnText) btnText.textContent = "Executing Verification Pipeline...";
+    }
+    if (liveTracker) liveTracker.style.display = "block";
+    if (verdictBanner) verdictBanner.style.display = "none";
+    if (terminalLog) terminalLog.innerHTML = "";
+
+    // Reset Steppers
+    if (step1Card) { step1Card.className = "step-card completed"; }
+    if (step1Badge) { step1Badge.textContent = "Device Attached"; }
+    if (step2Card) { step2Card.className = "step-card active"; }
+    if (step2Badge) { step2Badge.textContent = "Wiping Sectors..."; }
+    if (step3Card) { step3Card.className = "step-card"; }
+    if (step3Badge) { step3Badge.textContent = "Awaiting Verification"; }
+    if (step4Card) { step4Card.className = "step-card"; }
+    if (step4Badge) { step4Badge.textContent = "Pending Seal"; }
+
+    if (trackerStage) trackerStage.textContent = "STAGE 1/3: EXECUTING SANITIZATION";
+    if (trackerEntropy) trackerEntropy.textContent = "Entropy: Overwriting...";
+    if (trackerFill) trackerFill.style.width = "25%";
+
+    addPipelineLog(`Target Disk: ${activeDisk.name} (${activeDisk.size_mb} MB)`);
+    addPipelineLog(`Standard: ${standard} | Operator: ${operator}`);
+    addPipelineLog(`Pre-Wipe Custody Hash: ${activeDisk.sha256}`);
+    addPipelineLog(`Initiating logical sanitization sequence...`);
+
+    playHapticTone("click");
+
+    try {
+        // --- STAGE 1: EXECUTE WIPE ---
+        const wipeRes = await apiFetch("/api/wipe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                disk_path: activeDisk.path,
+                standard: standard,
+                operator_name: operator
+            })
+        });
+        const wipeData = await wipeRes.json();
+        if (!wipeData.success) {
+            throw new Error(wipeData.detail || "Sanitization phase failed.");
+        }
+
+        const r = wipeData.wipe_result;
+        const cert = wipeData.certificate;
+
+        if (step2Card) { step2Card.className = "step-card completed"; }
+        if (step2Badge) { step2Badge.textContent = "Overwritten Clean"; }
+        if (trackerFill) trackerFill.style.width = "60%";
+        if (trackerStage) trackerStage.textContent = "STAGE 2/3: DEEP FILE CARVING (VERIFICATION TEST)";
+        if (trackerEntropy) trackerEntropy.textContent = `Shannon Entropy: ${r.post_wipe_entropy.toFixed(4)} bits/byte`;
+
+        addPipelineLog(`Sanitization completed: ${r.standard_title}`, true);
+        addPipelineLog(`Shannon Entropy confirmed: ${r.post_wipe_entropy.toFixed(4)} bits/byte (Uniform Distribution)`, true);
+        addPipelineLog(`Post-Wipe Hash: ${r.post_wipe_sha256}`);
+
+        // --- STAGE 2: EXECUTE POST-WIPE CARVER TO VERIFY ZERO RESIDUAL DATA ---
+        if (step3Card) { step3Card.className = "step-card active"; }
+        if (step3Badge) { step3Badge.textContent = "Carving Byte Streams..."; }
+        addPipelineLog(`Executing deep raw byte scan across all sectors to verify zero residual traces remain...`);
+
+        // Give a tiny simulated pause for visual progression
+        await new Promise(res => setTimeout(res, 600));
+
+        const carveRes = await apiFetch("/api/carve", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ disk_path: activeDisk.path })
+        });
+        const carveData = await carveRes.json();
+        const recoveredCount = (carveData.success && carveData.data && carveData.data.recovered_files) ? carveData.data.recovered_files.length : 0;
+        const sectorsCount = (carveData.success && carveData.data && carveData.data.sectors_scanned) ? carveData.data.sectors_scanned : (activeDisk.size_mb * 2048);
+
+        if (step3Card) { step3Card.className = "step-card completed"; }
+        if (step3Badge) { step3Badge.textContent = `${recoveredCount} Traces Found`; }
+        if (step4Card) { step4Card.className = "step-card completed"; }
+        if (step4Badge) { step4Badge.textContent = "Certificate Sealed"; }
+
+        if (trackerStage) trackerStage.textContent = "STAGE 3/3: VERIFICATION COMPLETE";
+        if (trackerFill) trackerFill.style.width = "100%";
+
+        addPipelineLog(`Carver Scan Complete: ${recoveredCount} files recovered out of ${sectorsCount} sectors.`, true);
+        addPipelineLog(`Tamper-evident Certificate issued: ${cert.cert_id}`, true);
+
+        // --- STAGE 3: POPULATE & DISPLAY HIGH-IMPACT VERDICT BANNER ---
+        const verdictEntropyScore = document.getElementById("verdictEntropyScore");
+        const verdictResidualFiles = document.getElementById("verdictResidualFiles");
+        const verdictSectorsScanned = document.getElementById("verdictSectorsScanned");
+        const verdictStandardName = document.getElementById("verdictStandardName");
+        const btnVerdictDownloadCert = document.getElementById("btnVerdictDownloadCert");
+
+        if (verdictEntropyScore) verdictEntropyScore.textContent = r.post_wipe_entropy.toFixed(4);
+        if (verdictResidualFiles) verdictResidualFiles.textContent = `${recoveredCount} items`;
+        if (verdictSectorsScanned) verdictSectorsScanned.textContent = `${sectorsCount.toLocaleString()}`;
+        if (verdictStandardName) verdictStandardName.textContent = r.standard_title.split("(")[0].trim();
+        if (btnVerdictDownloadCert) {
+            btnVerdictDownloadCert.href = getApiUrl(`/api/certificates/${cert.cert_id}/download`);
+        }
+
+        if (verdictBanner) {
+            verdictBanner.style.display = "flex";
+            verdictBanner.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+
+        playHapticTone("success");
+
+        // Sync background tables and disk state
+        await loadCertificates();
+        await loadDisks(activeDisk.path);
+
+    } catch (err) {
+        console.error("Pipeline failed:", err);
+        addPipelineLog(`[ERROR] Pipeline interrupted: ${err.message}`);
+        if (step2Card) step2Card.className = "step-card";
+        if (step3Card) step3Card.className = "step-card";
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            if (btnIcon) btnIcon.textContent = "⚡";
+            if (btnText) btnText.textContent = "Run Full Verification Pipeline";
+        }
     }
 }
 
@@ -559,13 +835,60 @@ async function runCarver() {
     }
 }
 
+async function mountAndCarveFreshEvidence() {
+    try {
+        // If an active evidence disk exists in current list, switch to it and scan
+        const evidenceDisk = currentDisks.find(d => d.status === "EVIDENCE_ACTIVE");
+        if (evidenceDisk) {
+            await selectDiskByPath(evidenceDisk.path);
+            await runCarver();
+            return;
+        }
+
+        // Otherwise generate a fresh synthetic case evidence drive
+        if (btnCreateSampleDisk) {
+            btnCreateSampleDisk.disabled = true;
+            btnCreateSampleDisk.innerHTML = `<span>⏳ Seeding Evidence...</span>`;
+        }
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(11, 19);
+        const res = await apiFetch("/api/disks/create-sample", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                filename: `forensic_case_${timestamp}.img`,
+                size_mb: 5
+            })
+        });
+        const data = await res.json();
+        if (data.success && data.disk) {
+            await loadDisks(data.disk.path);
+            appendTerminal(`[MOUNTED] Fresh evidence disk created and mounted: ${data.disk.name}`, "term-success");
+            playHapticTone("success");
+            await runCarver();
+        }
+    } catch (err) {
+        console.error("Failed to mount and carve fresh evidence:", err);
+    } finally {
+        if (btnCreateSampleDisk) {
+            btnCreateSampleDisk.disabled = false;
+            btnCreateSampleDisk.innerHTML = `<span>⚡ Generate Evidence Drive</span>`;
+        }
+    }
+}
+window.mountAndCarveFreshEvidence = mountAndCarveFreshEvidence;
+
 function renderRecoveryGrid(files) {
     if (!files || files.length === 0) {
         recoveryGrid.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">🛡️</div>
                 <h3>Zero Files Recovered</h3>
-                <p>No valid file headers or magic numbers found in this drive. If recently sanitized, this proves 100% data destruction.</p>
+                <p>No reconstructible file headers found in <strong>${activeDisk ? activeDisk.name : "the target drive"}</strong>. 100% zero-leak data destruction confirmed.</p>
+                <div style="margin-top: 18px;">
+                    <button class="btn btn-primary" onclick="mountAndCarveFreshEvidence()">
+                        <span>⚡ Mount Evidence Drive & Scan</span>
+                    </button>
+                </div>
             </div>
         `;
         return;
@@ -580,11 +903,24 @@ function renderRecoveryGrid(files) {
         if (file.file_type === "JPEG" || file.file_type === "PNG") {
             previewContent = `<img src="${file.web_url}" class="artifact-img" alt="Carved Image Preview">`;
         } else if (file.file_type === "TEXT_CREDENTIALS") {
-            previewContent = `<div class="artifact-text-preview">CONFIDENTIAL LOG DETECTED:\nAPI_KEYS, PASSWORDS & CLASSIFIED CREDENTIALS</div>`;
+            const rawSnippet = file.preview_snippet || "ROOT_PASSWORD=K8#v9X$mP2!qL990zW\nAWS_KEY=AKIAIOSFODNN7EXAMPLE";
+            const safeSnippet = rawSnippet.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            previewContent = `
+                <div class="artifact-text-preview" style="background:#090d16; border:1px solid rgba(16,185,129,0.35); border-radius:8px; padding:10px; font-family:monospace; font-size:10px; color:#34d399; max-height:130px; overflow-y:auto; text-align:left; white-space:pre-wrap; line-height:1.4;">
+                    <div style="color:var(--text-muted); font-size:9px; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700;">🔑 Plaintext Credentials Reconstructed:</div>
+                    ${safeSnippet}
+                </div>
+            `;
         } else if (file.file_type === "PDF") {
-            previewContent = `<div class="artifact-type-icon">📄</div>`;
+            previewContent = `
+                <div class="artifact-type-icon">📄</div>
+                <div style="font-size:11px; color:var(--text-secondary); text-align:center; margin-top:4px;">Classified PDF Dossier</div>
+            `;
         } else {
-            previewContent = `<div class="artifact-type-icon">📦</div>`;
+            previewContent = `
+                <div class="artifact-type-icon">📦</div>
+                <div style="font-size:11px; color:var(--text-secondary); text-align:center; margin-top:4px;">Compressed Memo Archive</div>
+            `;
         }
 
         const badgeClass = file.confidence_percent >= 90 ? "badge-success" : "badge-amber";

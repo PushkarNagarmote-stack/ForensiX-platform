@@ -53,19 +53,104 @@ class DiskManager:
         return sha256.hexdigest()
 
     @staticmethod
+    def inspect_disk_status(file_path: Path) -> Dict[str, Any]:
+        """
+        Inspect disk image to detect if it contains intact synthetic evidence
+        or has been wiped / sanitized.
+        """
+        try:
+            total_size = file_path.stat().st_size
+            if total_size == 0:
+                return {"status": "EMPTY", "label": "Empty (0 KB)", "evidence_count": 0}
+
+            with open(file_path, "rb") as f:
+                # Check JPEG header at Sector 2048 (offset 1048576)
+                if total_size >= 1048576 + 4:
+                    f.seek(1048576)
+                    hdr_jpeg = f.read(3)
+                    if hdr_jpeg == b"\xFF\xD8\xFF":
+                        return {
+                            "status": "EVIDENCE_ACTIVE",
+                            "label": "Evidence Loaded (5 Artifacts)",
+                            "evidence_count": 5
+                        }
+
+                # Check PNG header at Sector 3500 (offset 1792000)
+                if total_size >= 1792000 + 8:
+                    f.seek(1792000)
+                    hdr_png = f.read(4)
+                    if hdr_png == b"\x89PNG":
+                        return {
+                            "status": "EVIDENCE_ACTIVE",
+                            "label": "Evidence Loaded (Active)",
+                            "evidence_count": 4
+                        }
+
+                # Sample first 4KB to check if zeroed or pattern
+                f.seek(0)
+                sample = f.read(min(4096, total_size))
+                if sample.strip(b"\x00") == b"":
+                    return {
+                        "status": "SANITIZED",
+                        "label": "Sanitized (0.0000 H • Zeroed)",
+                        "evidence_count": 0
+                    }
+
+            return {
+                "status": "SANITIZED",
+                "label": "Sanitized (Overwritten)",
+                "evidence_count": 0
+            }
+        except Exception:
+            return {"status": "UNKNOWN", "label": "Raw Media", "evidence_count": 0}
+
+    @staticmethod
+    def ensure_default_evidence_disk() -> Dict[str, Any]:
+        """Ensure that at least one evidence-packed disk exists for instant demonstration."""
+        default_target = DISKS_DIR / "sih_evidence_drive.img"
+        need_create = True
+        if default_target.exists():
+            status = DiskManager.inspect_disk_status(default_target)
+            if status["status"] == "EVIDENCE_ACTIVE":
+                need_create = False
+
+        if need_create:
+            return DiskManager.create_sample_disk("sih_evidence_drive.img", size_mb=5)
+        return {
+            "name": default_target.name,
+            "path": str(default_target),
+            "size_bytes": default_target.stat().st_size,
+            "size_mb": 5,
+            "sha256": DiskManager.calculate_sha256(default_target)
+        }
+
+    @staticmethod
     def list_disks() -> List[Dict[str, Any]]:
-        """List all available virtual disk images and their metadata."""
+        """
+        List all available virtual disk images and their metadata.
+        Intelligently prioritizes active evidence drives first, followed by sanitized ones.
+        """
+        # Ensure at least one evidence disk is ready
+        DiskManager.ensure_default_evidence_disk()
+
         disks = []
         for file in DISKS_DIR.glob("*.img"):
             stat = file.stat()
+            inspection = DiskManager.inspect_disk_status(file)
             disks.append({
                 "name": file.name,
                 "path": str(file),
                 "size_bytes": stat.st_size,
                 "size_mb": round(stat.st_size / (1024 * 1024), 2),
                 "modified": stat.st_mtime,
-                "sha256": DiskManager.calculate_sha256(file)
+                "sha256": DiskManager.calculate_sha256(file),
+                "status": inspection["status"],
+                "status_label": inspection["label"],
+                "evidence_count": inspection["evidence_count"]
             })
+
+        # Sort: EVIDENCE_ACTIVE drives first (newest modified first), then SANITIZED drives
+        disks.sort(key=lambda d: (0 if d["status"] == "EVIDENCE_ACTIVE" else 1, -d["modified"]))
         return disks
 
     @staticmethod

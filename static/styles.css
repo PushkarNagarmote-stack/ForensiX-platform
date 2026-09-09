@@ -58,6 +58,19 @@
     --radius-full:        9999px;
     --ease-spring:        cubic-bezier(0.16, 1, 0.3, 1);
     --ease-smooth:        cubic-bezier(0.25, 1, 0.5, 1);
+
+    /* ForensiX CodeNest Theme Tokens */
+    --fx-bg:              #040d0a;
+    --fx-surface:         #0c1512;
+    --fx-green:           #5ed29c;
+    --fx-green-dim:       rgba(94, 210, 156, 0.15);
+    --fx-green-glow:      rgba(94, 210, 156, 0.35);
+    --fx-border:          rgba(255, 255, 255, 0.08);
+    --fx-border-green:    rgba(94, 210, 156, 0.3);
+    --fx-white-70:        rgba(255, 255, 255, 0.7);
+    --fx-white-50:        rgba(255, 255, 255, 0.5);
+    --font-instrument:    'Instrument Serif', Georgia, serif;
+    --font-jakarta:       'Plus Jakarta Sans', sans-serif;
 }
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1660,3 +1673,338 @@ button, select, input, .tab-btn, .landing-nav-link, .dock-item {
         font-size: 16px !important;
     }
 }
+
+/* ==========================================================================
+   Guided Verification Pipeline (SIH26149 PPT 4-Step Stepper & Verdict)
+   ========================================================================== */
+.pipeline-card {
+    padding: 32px 36px;
+    margin-bottom: 24px;
+    background: rgba(10, 24, 16, 0.65);
+    border: 1px solid rgba(94, 210, 156, 0.22);
+    border-radius: var(--radius-2xl);
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 0 30px -10px rgba(94, 210, 156, 0.15);
+}
+.pipeline-header {
+    margin-bottom: 28px;
+}
+.pipeline-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    background: rgba(94, 210, 156, 0.1);
+    border: 1px solid rgba(94, 210, 156, 0.25);
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--fx-green);
+    margin-bottom: 12px;
+}
+.pipeline-title {
+    font-family: var(--font-display);
+    font-size: clamp(24px, 3vw, 32px);
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+.pipeline-desc {
+    font-size: 14.5px;
+    color: var(--text-secondary);
+    max-width: 820px;
+    line-height: 1.65;
+}
+
+/* Stepper Bar */
+.pipeline-stepper {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+.step-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: rgba(6, 16, 11, 0.65);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    transition: all 0.3s var(--ease-spring);
+}
+.step-card.active {
+    border-color: rgba(94, 210, 156, 0.45);
+    background: rgba(94, 210, 156, 0.1);
+    box-shadow: 0 4px 20px -5px rgba(94, 210, 156, 0.25);
+}
+.step-card.completed {
+    border-color: rgba(94, 210, 156, 0.3);
+    background: rgba(16, 185, 129, 0.08);
+}
+.step-num {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--fx-green);
+    opacity: 0.8;
+}
+.step-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.step-phase {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.step-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.step-badge {
+    font-size: 10.5px;
+    color: var(--fx-green);
+    font-weight: 500;
+}
+.step-arrow {
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 16px;
+    user-select: none;
+}
+
+/* Pipeline Control Form */
+.pipeline-controls {
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.pipeline-form-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1.2fr auto;
+    gap: 20px;
+    align-items: flex-end;
+}
+.pipeline-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.pipeline-field label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.pipeline-field select,
+.pipeline-field input {
+    width: 100%;
+}
+.pipeline-action-field button {
+    height: 44px;
+    padding: 0 28px;
+}
+
+/* Live Progress Tracker */
+.pipeline-live-tracker {
+    margin-top: 28px;
+    padding: 20px 24px;
+    border-radius: var(--radius-lg);
+    background: rgba(4, 13, 10, 0.8);
+    border: 1px solid rgba(94, 210, 156, 0.25);
+    animation: fadeSlideUp 0.3s var(--ease-spring) both;
+}
+.tracker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.tracker-stage {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--fx-green);
+}
+.tracker-entropy {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-secondary);
+}
+.tracker-track {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 9999px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+.tracker-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, var(--fx-green));
+    border-radius: 9999px;
+    transition: width 0.4s var(--ease-smooth);
+}
+.tracker-terminal {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    max-height: 80px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.tracker-line {
+    line-height: 1.4;
+}
+
+/* High-Impact Verdict Banner */
+.verdict-banner {
+    margin-top: 28px;
+    padding: 28px 32px;
+    border-radius: var(--radius-xl);
+    background: linear-gradient(135deg, rgba(10, 32, 22, 0.9) 0%, rgba(4, 16, 11, 0.95) 100%);
+    border: 1.5px solid rgba(94, 210, 156, 0.5);
+    box-shadow: 0 16px 45px -10px rgba(94, 210, 156, 0.3), 0 0 20px rgba(94, 210, 156, 0.15) inset;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 28px;
+    flex-wrap: wrap;
+    animation: fadeSlideUp 0.45s var(--ease-spring) both;
+}
+.verdict-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    max-width: 780px;
+}
+.verdict-badge-icon {
+    font-size: 38px;
+    width: 68px;
+    height: 68px;
+    border-radius: 18px;
+    background: rgba(94, 210, 156, 0.15);
+    border: 1px solid rgba(94, 210, 156, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 0 20px rgba(94, 210, 156, 0.3);
+}
+.verdict-gate-text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+.verdict-gate-text strong {
+    color: var(--fx-green);
+}
+.verdict-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+}
+.verdict-desc {
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin-bottom: 14px;
+}
+.verdict-stats-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.verdict-stat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+}
+.chip-label { color: var(--text-muted); }
+.chip-val { color: var(--fx-green); font-weight: 700; }
+.verdict-right {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+    flex-shrink: 0;
+}
+
+/* Quick Guide Cards */
+.pipeline-guide-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+.guide-card {
+    padding: 20px 24px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+.guide-icon {
+    font-size: 26px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+.guide-card h4 {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+.guide-card p {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+/* Responsive adjustments for pipeline */
+@media (max-width: 1024px) {
+    .pipeline-stepper {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    .step-arrow {
+        display: none;
+    }
+    .pipeline-form-row {
+        grid-template-columns: 1fr;
+    }
+    .verdict-banner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .verdict-right {
+        width: 100%;
+    }
+    .verdict-right .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
